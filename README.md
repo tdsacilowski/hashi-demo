@@ -54,10 +54,11 @@ This project is organized into three phases:
 3. Once the base infrastructure is complete, and Vault is setup, we again use Terraform to deploy the Nomad cluster consisting of the following:
 
     - Nomad server(s)
-        - Uses the Consul client to provide [service discovery][nomad_service_discovery] for Nomad jobs.
+        - Uses the Consul client to provide [service discovery][nomad_service_discovery] for Nomad tasks.
         - Integrated with Vault to allow [creating and distributing Vault tokens to Nomad jobs][nomad_vault_task].
+
     - Nomad client(s)
-        - X number of worker instances on which the Nomad server(s) schedule jobs.
+        - X number of worker instances on which the Nomad server(s) schedule tasks.
         - The Nomad clients use a pre-baked AMI created using Packer, since the Docker installation adds a significant amount of time to instance startup.
         - The Terraform files for this phase point to the state produced from the phase 1 deployment (`base-infrastructure`) using the [remote state backend for local filesystem][remote_state_local].
 
@@ -228,7 +229,19 @@ Once all variables have been set, from the `nomad-cluster` directory, run the fo
 - `terraform plan`
 - And if all looks good, `terraform apply` to provision
 
-Once the Nomad cluster has been provisioned, public IP addresses for the servers created will be output to the console. You can use these, as above, to SSH into a Nomad server so that we can start submitting some jobs.
+Once the Nomad cluster has been provisioned, public IP addresses for the servers created will be output to the console. You can use these, as above, to SSH into a Nomad server so that we can start submitting some tasks.
+
+#### Lesson Learned Regarding Vault Integration
+
+The integration doesn't necessarily allow you to inject secrets directly into Nomad job specifications, which is what I assume this meant at first. However, it was a deliberate decision to not allow this, and you can read more about the justifications [here][nomad_vault_discussion].
+
+The main use case here is to pass a lease-based token on to the Nomad task so that any Vault requests within that task can function without explicitly passing a token.
+
+However, certain types of tasks allow configuration via files. For example, in the `mysql/mysql-server` Docker container, if you specify a file path to the `MYSQL_ROOT_PASSWORD` environment variable, MySQL will use the file's contents for the `root` password.
+
+In these cases, it's extremely useful to use a Nomad [`template`][nomad_template] stanza to query Vault for the `root` password, and write it to the [`${NOMAD_SECRETS_DIR}`][nomad_secrets_path] which is a secured filesystem path available only to the defined job.
+
+This path, which Nomad provides to each job by default, is secured and can not be read outside of the context of the running job. E.g. neither `docker inspect` nor `nomad fs` will expose the contents of this file.
 
 #### Submitting Jobs
 
@@ -255,3 +268,6 @@ Run `terraform destroy` from the `nomad-cluster` directory first, and then from 
 [packer]: https://www.packer.io/intro/
 [remote_state_local]: https://www.terraform.io/docs/state/remote/local.html
 [atlas]: (https://atlas.hashicorp.com/)
+[nomad_vault_discussion]: https://github.com/hashicorp/nomad/issues/597
+[nomad_template]: https://www.nomadproject.io/docs/job-specification/template.html
+[nomad_secrets_path]: https://www.nomadproject.io/docs/runtime/environment.html#secrets_
