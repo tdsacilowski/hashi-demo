@@ -192,7 +192,7 @@ for how to submit and monitor jobs.
 
 In order to teardown the entire environment, we need to work in the reverse from above.
 
-Run `terraform destroy` from the `nomad-cluster` directory first, and then the `base-infrastructure`.:
+Run `terraform destroy` from the `nomad-cluster` directory first, and then from the `base-infrastructure` directory.
 
 
 [retry_join_ec2]: https://www.consul.io/docs/agent/options.html#retry_join_ec2
