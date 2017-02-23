@@ -24,6 +24,7 @@ Additionally, the project contains examples (_still a work in progress_) that se
     - Explain or show how to revoke and rotate these credentials early and initiate break glass procedures
 
 ## Approach
+
 Firstly, this project was heavily influenced by a number of examples provided by HashiCorp, especially:
 - https://github.com/hashicorp/best-practices/
 - https://github.com/hashicorp/atlas-examples/
@@ -69,6 +70,7 @@ AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY
 AWS_DEFAULT_REGION
 ```
+
 Additionally, Terraform can obtain your AWS credentials [using these methods][terraform_aws_creds].
 
 ### Build Packer AMIs
@@ -77,15 +79,17 @@ This project uses [Packer] to generate an AMI for the Nomad cluster, with Docker
 
 Ideally, you should pre-bake as much as possible into AMIs for each component of the system and only send over bootstrap configuration via Terraform (or other provisioners). Packer allows you to easily build various machine images as part of your CI / CD pipeline.
 
-Building our Nomad client AMI is very straightforward. The `hashi-demo/packer/nomad-client directory` contains a JSON file with the image and build definition. Navigate to this directory and perform the following:
+Building our Nomad client AMI is very straightforward. The `hashi-demo/packer/nomad-client directory` contains a JSON file with the image and build definition.
 
-1. Validate the template:
+First, let's navigate to this directory and validate our template:
+    
 ```
 $ packer validate nomad-client.json
 Template validated successfully.
 ```
 
-2. Build the image:
+Next, we'll build the image:
+    
 ```
 $ packer build nomad-client.json
 ...
@@ -94,6 +98,9 @@ $ packer build nomad-client.json
 
 us-east-1: ami-5a885f4c
 ```
+
+Done. The AMI is now available for use.
+
 ### Generate SSH Keys
 
 Finally, be sure to generate the SSH keys that will be used to access your instances by running the the following command from the top-level directory (`hashi-demo`):
@@ -120,6 +127,7 @@ Once all variables have been set, from the `base-infrastructure` directory, run 
 Once the base infrastructure has been provisioned, public IP addresses for the servers created will be output to the console.
 
 Change to the top-level directory (`hashi-demo`) and use SSH to connect to the Vault server:
+
 ```
 ...
 servers_consul = [
@@ -134,7 +142,9 @@ $ chmod 0400 shared/ssh_keys/demo.pem
 
 $ ssh -i shared/ssh_keys/demo.pem ubuntu@184.72.67.30
 ```
+
 Once logged into the Vault server, initialize Vault:
+
 ```
 $ vault init
 
@@ -154,7 +164,9 @@ Vault does not store the master key. Without at least 3 keys,
 your Vault will remain permanently sealed.
 ...
 ```
+
 Next, unseal using the above keys (you will repeat this 3 times, with 3 different keys):
+
 ```
 $ vault unseal 9uqBraMl5OofD2ZSzKbCOCP9tOSy2p+xVJgZ7Fbn8+MB
 
@@ -164,7 +176,9 @@ Key Threshold: 3
 Unseal Progress: 1
 ...
 ```
+
 Finally, authenticate using the _Initial Root Token_:
+
 ```
 $ vault auth f79dbbec-f41d-9f92-221a-18401daff77a
 
@@ -174,17 +188,21 @@ token_duration: 0
 token_policies: [root]
 ...
 ```
+
 Once authenticated with Vault, create run the initial authentication setup script, provided for you in the `.demo/` directory:
+
 ```
 $ cd demo
 
 $ initial-auth-setup.sh
 ```
+
 This will create the initial policies, roles, and enable AWS-EC2 auth, that our Nomad cluster will use.
 
 ## Provision the Nomad Cluster
 
 Similar to the above, the `nomad-cluster` project uses the file "`main.tf`" to set variables for the environment. However, this project depends mostly on the remote state (stored on the local filesystem) of the `base-infrastructure` for properly deploying into the same AWS infrastructure:
+
 ```
 data "terraform_remote_state" "base-infrastructure" {
   backend = "local"
@@ -193,13 +211,16 @@ data "terraform_remote_state" "base-infrastructure" {
   }
 }
 ```
+
 The only other variables that need to be set are specific to the Nomad cluster size that is desired. Additionally, this is where you'd enter the AMI ID of the Nomad client image created by Packer:
+
 ```
 # Pre-baked AMI using Packer (see [PROJECT_ROOT]/packer/nomad-client)
 variable "client_ami" {
   default = "ami-5a885f4c"
 }
 ```
+
 Once all variables have been set, from the `nomad-cluster` directory, run the following:
 - `terraform get`
 - `terraform plan`
@@ -218,7 +239,6 @@ for how to submit and monitor jobs.
 In order to teardown the entire environment, we need to work in the reverse from above.
 
 Run `terraform destroy` from the `nomad-cluster` directory first, and then from the `base-infrastructure` directory.
-
 
 [retry_join_ec2]: https://www.consul.io/docs/agent/options.html#retry_join_ec2
 [dnsmasq]: http://www.thekelleys.org.uk/dnsmasq/doc.html
