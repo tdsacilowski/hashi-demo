@@ -23,11 +23,13 @@ Additionally, the project contains examples (_still a work in progress_) that se
     - Authenticate using one of the human auth backends (e.g. GitHub, Username & Password, LDAP, Tokens)
     - Explain or show how to revoke and rotate these credentials early and initiate break glass procedures
 
-## Approach
+Much of the work here was heavily influenced by a number of examples provided by HashiCorp, especially in terms of learning idioms, project structure, and best practices. I learn best by doing, and by deconstructing the work of those much more knowlegeable than me. The following projects were especially instructive:
 
-Firstly, this project was heavily influenced by a number of examples provided by HashiCorp, especially:
 - https://github.com/hashicorp/best-practices/
 - https://github.com/hashicorp/atlas-examples/
+- https://aws.amazon.com/quickstart/architecture/vault/
+
+## Approach
   
 This project is organized into three phases:
 
