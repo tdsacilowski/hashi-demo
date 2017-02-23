@@ -2,6 +2,23 @@ Consul + Vault + Nomad (via Terraform)
 ======================================
 ...and a tiny bit of Packer...
 
+**Table of Contents**
+
+- [Overview](#)
+- [Approach](#)
+- [Requirements](#)
+    - [AWS Credentials](#)
+    - [Build Packer AMIs](#)
+    - [Generate SSH Keys](#)
+- [Provision the Base Infrastructure](#)
+- [Perform Vault Setup](#)
+- [Provision the Nomad Cluster](#)
+    - [Lesson Learned Regarding Vault Integration](#)
+    - [Submitting Jobs](#)
+- [Environment Teardown](#)
+
+## Overview
+
 This is a sample / demo / instructional project with the goal of demonstrating how to piece together an infrastructure based on HashiCorp build and runtime tools.
 
 Additionally, the project contains examples (_still a work in progress_) that serve to illustrate the following 3 use cases for Vault:
