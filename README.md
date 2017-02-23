@@ -1,7 +1,9 @@
 # Consul + Vault + Nomad (via Terraform)
 ...and a tiny bit of Packer...
 
-This is sample/demo/instructional project with the goal of learning how to piece together an infrastructure based on HashiCorp build and runtime tools. Additionally, within a functional environment, the project is supposed to serve as an illustration of the following 3 use cases for Vault:
+This is a sample / demo / instructional project with the goal of demonstrating how to piece together an infrastructure based on HashiCorp build and runtime tools.
+
+Additionally, the project contains examples (_still a work in progress_) that serve to illustrate the following 3 use cases for Vault:
 
 - Secrets Management (secrets for machines)
     - Generic & Dynamic secret backends (e.g. MySQL secret backend)
@@ -58,7 +60,9 @@ This project is organized into three phases:
 
 ## Requirements
 
-A deliberate decision was made to not utilize any [Atlas](https://atlas.hashicorp.com/) functionality in this project. Instead, we are building all artifacts locally. As such, only the following environment variables are required:
+### AWS Credentials
+
+A deliberate decision was made to not utilize any [Atlas] functionality in this project. Instead, we are building all artifacts locally. As such, only the following environment variables are required:
 
 ```
 AWS_ACCESS_KEY_ID
@@ -67,10 +71,31 @@ AWS_DEFAULT_REGION
 ```
 Additionally, Terraform can obtain your AWS credentials [using these methods][terraform_aws_creds].
 
-Additionally, we are using Packer to generate an AMI with Docker pre-installed in order to speed up the deployment process a bit. Ideally, you'd pre-bake as much as possible into AMIs for each component of the system and only send over bootstrap configuration via Terraform (or other provisioners).
+### Build Packer AMIs
+
+This project uses [Packer] to generate an AMI for the Nomad cluster, with Docker pre-installed in order to speed up the deployment process a bit.
+
+Ideally, you should pre-bake as much as possible into AMIs for each component of the system and only send over bootstrap configuration via Terraform (or other provisioners). Packer allows you to easily build various machine images as part of your CI / CD pipeline.
+
+Building our Nomad client AMI is very straightforward. The `hashi-demo/packer/nomad-client directory` contains a JSON file with the image and build definition. Navigate to this directory and perform the following:
+
+1. Validate the template:
 ```
-...How to create nomad-client AMI...
+$ packer validate nomad-client.json
+Template validated successfully.
 ```
+
+2. Build the image:
+```
+$ packer build nomad-client.json
+...
+==> Builds finished. The artifacts of successful builds are:
+--> amazon-ebs: AMIs were created:
+
+us-east-1: ami-5a885f4c
+```
+### Generate SSH Keys
+
 Finally, be sure to generate the SSH keys that will be used to access your instances by running the the following command from the top-level directory (`hashi-demo`):
 ```
 $ shared/ssh_keys/generate_key_pair.sh demo
@@ -79,7 +104,7 @@ A key name is required and this project assumes that the name "`demo`" will be u
 
 **_TODO:_** _refactor to allow setting of the key name via variable_.
 
-### Provision the Base Infrastructure
+## Provision the Base Infrastructure
 
 The Terraform file `terraform/base-infrastructure/main.tf` contains all variable definitions. Adjust values accordingly. For example, if multiple subnets are required, adjust the `vpc_cidrs` variable as needed. The Terraform AWS resource definitions have been implemented with `count` iterators where appropriate to allow us to scale up as needed.
 
@@ -90,7 +115,7 @@ Once all variables have been set, from the `base-infrastructure` directory, run 
 
 **_IMPORTANT:_** Make sure to run Terraform from the this directory first. The resources in the `nomad-cluster` directory depend on the state produced from this step.
 
-### Perform Vault Setup
+## Perform Vault Setup
 
 Once the base infrastructure has been provisioned, public IP addresses for the servers created will be output to the console.
 
@@ -155,9 +180,9 @@ $ cd demo
 
 $ initial-auth-setup.sh
 ```
-This will create the initial policies, roles, and enable AWS-EC2 auth, that our nomad-cluster will use.
+This will create the initial policies, roles, and enable AWS-EC2 auth, that our Nomad cluster will use.
 
-### Provision the Nomad Cluster
+## Provision the Nomad Cluster
 
 Similar to the above, the `nomad-cluster` project uses the file "`main.tf`" to set variables for the environment. However, this project depends mostly on the remote state (stored on the local filesystem) of the `base-infrastructure` for properly deploying into the same AWS infrastructure:
 ```
@@ -168,7 +193,7 @@ data "terraform_remote_state" "base-infrastructure" {
   }
 }
 ```
-The only other variables that need to be set are specific to the nomad cluster size that is desired. Additionally, this is where you'd enter the AMI ID of the nomad-client image created by Packer:
+The only other variables that need to be set are specific to the Nomad cluster size that is desired. Additionally, this is where you'd enter the AMI ID of the Nomad client image created by Packer:
 ```
 # Pre-baked AMI using Packer (see [PROJECT_ROOT]/packer/nomad-client)
 variable "client_ami" {
@@ -180,7 +205,7 @@ Once all variables have been set, from the `nomad-cluster` directory, run the fo
 - `terraform plan`
 - And if all looks good, `terraform apply` to provision
 
-Once the nomad cluster has been provisioned, public IP addresses for the servers created will be output to the console. You can use these, as above, to SSH into a Nomad server so that we can start submitting some jobs.
+Once the Nomad cluster has been provisioned, public IP addresses for the servers created will be output to the console. You can use these, as above, to SSH into a Nomad server so that we can start submitting some jobs.
 
 #### Submitting Jobs
 
@@ -188,7 +213,7 @@ Job examples are available in [shared/jobs/](shared/nomad/jobs). See the
 [Getting Started guide](https://www.nomadproject.io/intro/getting-started/jobs.html)
 for how to submit and monitor jobs.
 
-### Environment Teardown
+## Environment Teardown
 
 In order to teardown the entire environment, we need to work in the reverse from above.
 
@@ -204,6 +229,7 @@ Run `terraform destroy` from the `nomad-cluster` directory first, and then from 
 [secret_backends]: https://www.vaultproject.io/docs/secrets/index.html
 [nomad_service_discovery]: https://www.nomadproject.io/docs/agent/configuration/consul.html
 [nomad_vault_task]: https://www.nomadproject.io/docs/agent/configuration/vault.html
-
 [terraform_aws_creds]: https://www.terraform.io/docs/providers/aws/
+[packer]: https://www.packer.io/intro/
 [remote_state_local]: https://www.terraform.io/docs/state/remote/local.html
+[atlas]: (https://atlas.hashicorp.com/)
