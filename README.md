@@ -239,7 +239,7 @@ The main use case here is to pass a lease-based token on to the Nomad task so th
 
 However, certain types of tasks allow configuration via files. For example, in the `mysql/mysql-server` Docker container, if you specify a file path to the `MYSQL_ROOT_PASSWORD` environment variable, MySQL will use the file's contents for the `root` password.
 
-In these cases, it's extremely useful to use a Nomad [`template`][nomad_template] stanza to query Vault for the `root` password, and write it to the [`${NOMAD_SECRETS_DIR}`][nomad_secrets_path] which is a secured filesystem path available only to the defined job.
+In these cases, it's extremely useful to use a Nomad [`template`][nomad_template] stanza to query Vault for the `root` password, and write it to the [`NOMAD_SECRETS_DIR`][nomad_secrets_path] which is a secured filesystem path available only to the defined job.
 
 This path, which Nomad provides to each job by default, is secured and can not be read outside of the context of the running job. E.g. neither `docker inspect` nor `nomad fs` will expose the contents of this file.
 
