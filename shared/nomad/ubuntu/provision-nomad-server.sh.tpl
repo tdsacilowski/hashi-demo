@@ -48,6 +48,8 @@ echo "Nomad installation complete."
 VAULT_SERVICE_ADDRESS=`curl -s -H 'Accept: application/json' localhost:8500/v1/catalog/service/vault | jq -r .[0].ServiceAddress`
 VAULT_SERVICE_PORT=`curl -s -H 'Accept: application/json' localhost:8500/v1/catalog/service/vault | jq -r .[0].ServicePort`
 
+# IMPORTANT: This is just to illustrate functionality.In a production environment,
+# you would not output this value to the configuration file, as I am doing below
 VAULT_AWS_EC2_TOKEN=`curl -s -X POST "$$VAULT_SERVICE_ADDRESS:$$VAULT_SERVICE_PORT/v1/auth/aws-ec2/login" -d '{"role":"nomad-cluster","pkcs7":"'$(curl -s http://169.254.169.254/latest/dynamic/instance-identity/pkcs7 | tr -d '\n')'"}' | jq -r .auth.client_token`
 
 sudo tee /etc/nomad.d/nomad.hcl > /dev/null <<EOF
