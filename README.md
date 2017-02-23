@@ -1,4 +1,5 @@
-# Consul + Vault + Nomad (via Terraform)
+Consul + Vault + Nomad (via Terraform)
+======================================
 ...and a tiny bit of Packer...
 
 This is a sample / demo / instructional project with the goal of demonstrating how to piece together an infrastructure based on HashiCorp build and runtime tools.
@@ -29,7 +30,7 @@ Much of the work here was heavily influenced by a number of examples provided by
 - https://github.com/hashicorp/atlas-examples/
 - https://aws.amazon.com/quickstart/architecture/vault/
 
-## Approach
+# Approach
   
 This project is organized into three phases:
 
@@ -62,9 +63,11 @@ This project is organized into three phases:
         - The Nomad clients use a pre-baked AMI created using Packer, since the Docker installation adds a significant amount of time to instance startup.
         - The Terraform files for this phase point to the state produced from the phase 1 deployment (`base-infrastructure`) using the [remote state backend for local filesystem][remote_state_local].
 
-## Requirements
+# Requirements
 
-### AWS Credentials
+The below tasks should be completed before attempting to provision the environment with Terraform.
+
+## AWS Credentials
 
 A deliberate decision was made to not utilize any [Atlas] functionality in this project. Instead, we are building all artifacts locally. As such, only the following environment variables are required:
 
@@ -76,7 +79,7 @@ AWS_DEFAULT_REGION
 
 Additionally, Terraform can obtain your AWS credentials [using these methods][terraform_aws_creds].
 
-### Build Packer AMIs
+## Build Packer AMIs
 
 This project uses [Packer] to generate an AMI for the Nomad cluster, with Docker pre-installed in order to speed up the deployment process a bit.
 
@@ -104,7 +107,7 @@ us-east-1: ami-5a885f4c
 
 Done. The AMI is now available for use.
 
-### Generate SSH Keys
+## Generate SSH Keys
 
 Finally, be sure to generate the SSH keys that will be used to access your instances by running the the following command from the top-level directory (`hashi-demo`):
 ```
@@ -114,7 +117,7 @@ A key name is required and this project assumes that the name "`demo`" will be u
 
 **_TODO:_** _refactor to allow setting of the key name via variable_.
 
-## Provision the Base Infrastructure
+# Provision the Base Infrastructure
 
 The Terraform file `terraform/base-infrastructure/main.tf` contains all variable definitions. Adjust values accordingly. For example, if multiple subnets are required, adjust the `vpc_cidrs` variable as needed. The Terraform AWS resource definitions have been implemented with `count` iterators where appropriate to allow us to scale up as needed.
 
@@ -125,7 +128,7 @@ Once all variables have been set, from the `base-infrastructure` directory, run 
 
 **_IMPORTANT:_** Make sure to run Terraform from the this directory first. The resources in the `nomad-cluster` directory depend on the state produced from this step.
 
-## Perform Vault Setup
+# Perform Vault Setup
 
 Once the base infrastructure has been provisioned, public IP addresses for the servers created will be output to the console.
 
@@ -202,7 +205,7 @@ $ initial-auth-setup.sh
 
 This will create the initial policies, roles, and enable AWS-EC2 auth, that our Nomad cluster will use.
 
-## Provision the Nomad Cluster
+# Provision the Nomad Cluster
 
 Similar to the above, the `nomad-cluster` project uses the file "`main.tf`" to set variables for the environment. However, this project depends mostly on the remote state (stored on the local filesystem) of the `base-infrastructure` for properly deploying into the same AWS infrastructure:
 
@@ -231,7 +234,7 @@ Once all variables have been set, from the `nomad-cluster` directory, run the fo
 
 Once the Nomad cluster has been provisioned, public IP addresses for the servers created will be output to the console. You can use these, as above, to SSH into a Nomad server so that we can start submitting some tasks.
 
-#### Lesson Learned Regarding Vault Integration
+## Lesson Learned Regarding Vault Integration
 
 The integration doesn't necessarily allow you to inject secrets directly into Nomad job specifications, which is what I assume this meant at first. However, it was a deliberate decision to not allow this, and you can read more about the justifications [here][nomad_vault_discussion].
 
@@ -243,13 +246,15 @@ In these cases, it's extremely useful to use a Nomad [`template`][nomad_template
 
 This path, which Nomad provides to each job by default, is secured and can not be read outside of the context of the running job. E.g. neither `docker inspect` nor `nomad fs` will expose the contents of this file.
 
-#### Submitting Jobs
+## Submitting Jobs
 
 Job examples are available in [shared/jobs/](shared/nomad/jobs). See the
 [Getting Started guide](https://www.nomadproject.io/intro/getting-started/jobs.html)
 for how to submit and monitor jobs.
 
-## Environment Teardown
+**_TODO_**: _Add more detail about the specific jobs profided as examples in this project._
+
+# Environment Teardown
 
 In order to teardown the entire environment, we need to work in the reverse from above.
 
