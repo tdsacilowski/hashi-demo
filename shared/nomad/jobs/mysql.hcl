@@ -63,6 +63,7 @@ job "mysql" {
         # using a file path
         image = "mysql/mysql-server"
         network_mode = "host"
+        args = [ "--bind-address=0.0.0.0" ]
       }
 
       template {
@@ -77,7 +78,7 @@ job "mysql" {
       env {
         # For troubleshooting purposes. Should be written to ${NOMAD_SECRETS_DIR}
         MYSQL_ROOT_PASSWORD = "${NOMAD_TASK_DIR}/pwd"
-        #MYSQL_ROOT_HOST = "0.0.0.0"
+        MYSQL_ROOT_HOST = "%"
       }
 
       service {

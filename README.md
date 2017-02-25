@@ -217,7 +217,7 @@ Once authenticated with Vault, create run the initial authentication setup scrip
 ```
 $ cd demo
 
-$ initial-auth-setup.sh
+$ ./initial-auth-setup.sh
 ```
 
 This will create the initial policies, roles, and enable AWS-EC2 auth, that our Nomad cluster will use.

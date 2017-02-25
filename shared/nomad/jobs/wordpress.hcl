@@ -73,7 +73,7 @@ job "wordpress" {
         port = "http"
 
         check {
-          name     = "wordpress running on port 8080"
+          name     = "wordpress running on port 80"
           type     = "http"
           protocol = "http"
           path     = "/"
